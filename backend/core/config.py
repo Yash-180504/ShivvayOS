@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     default_openai_model: str = Field(default="gpt-4o-mini")
     default_anthropic_model: str = Field(default="claude-3-5-sonnet-20240620")
     llm_request_timeout_seconds: float = Field(default=60.0, ge=5.0, le=600.0)
+    allowed_cors_origins: str = Field(
+        default="http://localhost:3000,http://localhost:8000,https://shivvayos.vercel.app,https://shivvayos-production.up.railway.app",
+        description="Comma-separated list of allowed CORS origins",
+    )
 
     @property
     def async_database_url(self) -> str:

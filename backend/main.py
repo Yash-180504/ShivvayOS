@@ -1,18 +1,37 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from backend.api.routes import router as api_router
 from backend.errors.handlers import register_exception_handlers
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from backend.core.config import settings
+
+
+def _get_allowed_origins() -> list[str]:
+    """Get allowed origins from environment or defaults."""
+    # Allow environment variable to override (comma-separated)
+    if hasattr(settings, "allowed_cors_origins"):
+        origins = settings.allowed_cors_origins
+        if isinstance(origins, str):
+            return [o.strip() for o in origins.split(",")]
+        return origins
+    # Fallback to common development/production origins
+    return [
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "https://shivvayos.vercel.app",
+        "https://shivvayos-production.up.railway.app",
+    ]
+
 
 app = FastAPI()
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://shivvayos.vercel.app"],  # Your frontend URL
+    allow_origins=_get_allowed_origins(),
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Rest of your routes...
