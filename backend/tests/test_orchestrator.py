@@ -79,6 +79,31 @@ def test_ceo_synthesis_contains_marketing_and_finance_insights():
     assert "Finance projection:" in combined
 
 
+def test_ceo_synthesis_includes_workflow_intelligence_fields():
+    session = FakeSession()
+    repo = FakeRepository(session)
+    orchestrator = OrchestratorService(llm_provider=MockLLMProvider(), repository_factory=lambda _: repo)
+
+    response = asyncio.run(orchestrator.run_workflow(WorkflowRunRequest(goal="Improve revenue"), session))
+
+    assert response.executive_summary.strategic_priority_scores
+    assert response.executive_summary.risk_categories
+    assert response.executive_summary.departmental_conflicts
+    assert "Feasible" in response.executive_summary.execution_feasibility_assessment
+
+
+def test_task_results_include_quality_scores():
+    session = FakeSession()
+    repo = FakeRepository(session)
+    orchestrator = OrchestratorService(llm_provider=MockLLMProvider(), repository_factory=lambda _: repo)
+
+    response = asyncio.run(orchestrator.run_workflow(WorkflowRunRequest(goal="Improve revenue"), session))
+
+    assert all(0 <= result.confidence_score <= 1 for result in response.task_results)
+    assert all(0 <= result.reasoning_quality_score <= 1 for result in response.task_results)
+    assert all(0 <= result.schema_validity_score <= 1 for result in response.task_results)
+
+
 def test_task_persistence_behavior_updates_each_task():
     session = FakeSession()
     repo = FakeRepository(session)

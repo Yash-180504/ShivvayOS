@@ -1,9 +1,8 @@
 from datetime import datetime, timezone
 
 from backend.agents.base import BaseAgent
-from backend.llm.exceptions import LLMInvalidResponseError
-from backend.prompts.json_utils import extract_json_object
-from backend.prompts.marketing import build_marketing_analysis_prompt
+from backend.prompts.registry import prompt_registry
+from backend.workflows.context_builder import workflow_context_builder
 from backend.workflows.schemas import MarketingOutput, Task, TaskResult, TaskStatus, WorkflowContext
 
 
@@ -13,25 +12,33 @@ class MarketingAgent(BaseAgent):
 
     async def execute(self, task: Task, context: WorkflowContext) -> TaskResult:
         started_at = datetime.now(timezone.utc)
-        prompt = build_marketing_analysis_prompt(goal=context.goal)
+        prompt_context = workflow_context_builder.build_for_task(context, task)
+        prompt = prompt_registry.render("marketing.analysis", goal=context.goal, **prompt_context)
         result = await self.llm_provider.generate(prompt)
-        try:
-            data = extract_json_object(result.text)
-            hypothesis = data.get("growth_hypothesis") if isinstance(data.get("growth_hypothesis"), str) else None
-            if not hypothesis or not hypothesis.strip():
-                hypothesis = result.text.strip()
-        except LLMInvalidResponseError:
-            hypothesis = result.text.strip()
+        validation = self.response_validator.extract_field(
+            raw_text=result.text,
+            required_field="growth_hypothesis",
+            fallback_value=result.text,
+        )
 
-        output = MarketingOutput(
-            target_segments=["Mid-market SaaS", "D2C brands with repeat purchase patterns"],
-            campaign_plan=[
-                "Run paid search + retargeting in 2 ICP segments",
-                "Launch problem-solution content series for inbound leads",
-                "Optimize landing page CTA and trial onboarding",
-            ],
-            growth_hypothesis=hypothesis,
-            kpis=["SQL volume", "Landing page conversion", "CAC payback period"],
+        output = self.response_validator.enforce_schema(
+            MarketingOutput,
+            {
+                "target_segments": ["Mid-market SaaS", "D2C brands with repeat purchase patterns"],
+                "campaign_plan": [
+                    "Run paid search + retargeting in 2 ICP segments",
+                    "Launch problem-solution content series for inbound leads",
+                    "Optimize landing page CTA and trial onboarding",
+                ],
+                "growth_hypothesis": validation.data["growth_hypothesis"],
+                "kpis": ["SQL volume", "Landing page conversion", "CAC payback period"],
+            },
+        )
+        scores = self.quality_scorer.score(
+            output=output,
+            base_confidence=0.81,
+            schema_validity_score=validation.schema_validity_score,
+            used_recovery=validation.used_recovery,
         )
         return TaskResult(
             task_id=task.task_id,
@@ -40,6 +47,8 @@ class MarketingAgent(BaseAgent):
             status=TaskStatus.COMPLETED,
             started_at=started_at,
             completed_at=datetime.now(timezone.utc),
-            confidence_score=0.81,
+            confidence_score=scores.confidence_score,
+            reasoning_quality_score=scores.reasoning_quality_score,
+            schema_validity_score=scores.schema_validity_score,
             output=output,
         )

@@ -74,6 +74,8 @@ class WorkflowRepository:
             task.completed_at = result.completed_at
             task.output_json = result.output.model_dump(mode="json")
             task.confidence_score = result.confidence_score
+            task.reasoning_quality_score = result.reasoning_quality_score
+            task.schema_validity_score = result.schema_validity_score
         await self._session.flush()
 
     async def create_event(self, run_id: str, event: WorkflowEvent) -> WorkflowEventModel:

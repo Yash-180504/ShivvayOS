@@ -24,6 +24,7 @@ export function TaskExecutionsTable({ tasks }: { tasks: TaskExecutionRecord[] })
                 <TableHead>Status</TableHead>
                 <TableHead>Started</TableHead>
                 <TableHead>Completed</TableHead>
+                <TableHead>Quality</TableHead>
                 <TableHead>Failure</TableHead>
               </TableRow>
             </TableHeader>
@@ -35,6 +36,11 @@ export function TaskExecutionsTable({ tasks }: { tasks: TaskExecutionRecord[] })
                   <TableCell><StatusBadge status={task.status} /></TableCell>
                   <TableCell>{formatDate(task.started_at)}</TableCell>
                   <TableCell>{formatDate(task.completed_at)}</TableCell>
+                  <TableCell>
+                    {task.reasoning_quality_score != null && task.schema_validity_score != null
+                      ? `${Math.round(task.reasoning_quality_score * 100)}% / ${Math.round(task.schema_validity_score * 100)}%`
+                      : "-"}
+                  </TableCell>
                   <TableCell className="text-sm text-red-600">{task.error_message ?? "-"}</TableCell>
                 </TableRow>
               ))}

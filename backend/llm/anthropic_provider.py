@@ -9,6 +9,11 @@ from backend.llm.schemas import LLMGenerationParams, LLMGenerationResult
 
 logger = logging.getLogger("shivvayos.llm.anthropic")
 
+try:
+    from anthropic import AsyncAnthropic
+except ImportError:  # pragma: no cover
+    AsyncAnthropic = None  # type: ignore[assignment]
+
 
 class AnthropicLLMProvider(BaseLLMProvider):
     def __init__(
@@ -19,12 +24,10 @@ class AnthropicLLMProvider(BaseLLMProvider):
         default_timeout_seconds: float,
         max_tokens_default: int = 1024,
     ) -> None:
-        try:
-            from anthropic import AsyncAnthropic
-        except ImportError as exc:  # pragma: no cover
+        if AsyncAnthropic is None:  # pragma: no cover
             raise ImportError(
                 "Anthropic provider requires the 'anthropic' package. Install: pip install anthropic"
-            ) from exc
+            )
 
         self._default_model = default_model
         self._default_timeout_seconds = default_timeout_seconds

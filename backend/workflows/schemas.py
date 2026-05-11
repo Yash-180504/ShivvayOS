@@ -56,11 +56,28 @@ class FinanceOutput(BaseModel):
     profitability_actions: list[str]
 
 
+class StrategicPriorityScore(BaseModel):
+    priority: str
+    impact_score: float = Field(ge=0, le=1)
+    feasibility_score: float = Field(ge=0, le=1)
+    rationale: str
+
+
+class RiskCategory(BaseModel):
+    category: str
+    severity: Literal["low", "medium", "high"]
+    mitigation: str
+
+
 class CEOSynthesisOutput(BaseModel):
     kind: Literal["ceo_synthesis"] = "ceo_synthesis"
     executive_summary: str
     strategic_priorities: list[str]
+    strategic_priority_scores: list[StrategicPriorityScore] = Field(default_factory=list)
     combined_insights: list[str]
+    departmental_conflicts: list[str] = Field(default_factory=list)
+    risk_categories: list[RiskCategory] = Field(default_factory=list)
+    execution_feasibility_assessment: str = ""
     next_actions: list[str]
 
 
@@ -88,6 +105,8 @@ class TaskResult(BaseModel):
     started_at: datetime
     completed_at: datetime
     confidence_score: float = Field(ge=0, le=1)
+    reasoning_quality_score: float = Field(default=0.0, ge=0, le=1)
+    schema_validity_score: float = Field(default=0.0, ge=0, le=1)
     output: AgentOutput
     error_code: str | None = None
     error_message: str | None = None
@@ -156,6 +175,8 @@ class TaskExecutionRecord(BaseModel):
     completed_at: datetime | None
     output_json: dict | None
     confidence_score: float | None
+    reasoning_quality_score: float | None = None
+    schema_validity_score: float | None = None
     error_code: str | None
     error_message: str | None
     failed_at: datetime | None

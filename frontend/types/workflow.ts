@@ -19,6 +19,8 @@ export type TaskExecutionRecord = {
   completed_at: string | null;
   output_json: Record<string, unknown> | null;
   confidence_score: number | null;
+  reasoning_quality_score: number | null;
+  schema_validity_score: number | null;
   error_code: string | null;
   error_message: string | null;
   failed_at: string | null;

@@ -9,6 +9,11 @@ from backend.llm.schemas import LLMGenerationParams, LLMGenerationResult
 
 logger = logging.getLogger("shivvayos.llm.openai")
 
+try:
+    from openai import AsyncOpenAI
+except ImportError:  # pragma: no cover
+    AsyncOpenAI = None  # type: ignore[assignment]
+
 
 class OpenAILLMProvider(BaseLLMProvider):
     def __init__(
@@ -19,10 +24,8 @@ class OpenAILLMProvider(BaseLLMProvider):
         default_timeout_seconds: float,
         max_tokens_default: int = 1024,
     ) -> None:
-        try:
-            from openai import AsyncOpenAI
-        except ImportError as exc:  # pragma: no cover
-            raise ImportError("OpenAI provider requires the 'openai' package. Install: pip install openai") from exc
+        if AsyncOpenAI is None:  # pragma: no cover
+            raise ImportError("OpenAI provider requires the 'openai' package. Install: pip install openai")
 
         self._default_model = default_model
         self._default_timeout_seconds = default_timeout_seconds

@@ -3,7 +3,12 @@ def build_ceo_synthesis_prompt(
     goal: str,
     marketing_hypothesis: str,
     finance_projection: str,
+    summarized_context: str = "No prior context.",
+    execution_history: list[dict[str, str]] | None = None,
+    dependency_outputs: list[dict[str, object]] | None = None,
+    previous_agent_outputs: list[dict[str, object]] | None = None,
 ) -> str:
+    del execution_history, dependency_outputs, previous_agent_outputs
     return f"""You are the CEO agent synthesizing an executive summary for ShivvayOS.
 
 ## Role
@@ -14,6 +19,14 @@ def build_ceo_synthesis_prompt(
 - Overall goal: {goal}
 - Marketing hypothesis: {marketing_hypothesis}
 - Finance revenue projection narrative: {finance_projection}
+- Workflow context summary:
+{summarized_context}
+
+## Synthesis requirements
+- Identify alignment or conflicts between department recommendations.
+- Prioritize recommendations by business impact and execution feasibility.
+- Identify execution risks and mitigation needs.
+- Produce an actionable strategy suitable for an executive readout.
 
 ## Output contract
 Respond with **only** a single JSON object (no markdown prose outside JSON) with exactly this shape:
