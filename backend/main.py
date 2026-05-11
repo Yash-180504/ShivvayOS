@@ -1,8 +1,21 @@
 from fastapi import FastAPI
-
 from backend.api.routes import router as api_router
 from backend.errors.handlers import register_exception_handlers
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
+app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://shivvayos.vercel.app"],  # Your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
+    allow_headers=["*"],  # Allow all headers
+)
+
+# Rest of your routes...
 
 def create_app() -> FastAPI:
     app = FastAPI(
